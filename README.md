@@ -2,14 +2,14 @@
 
 Отслеживание новых вакансий на сайте HH
 
-# Установка
+## Установка
 
 ```sh
 $ pip install git+https://github.com/khokhlin/hhtracker.git
 ```
 
-# Использование
+## Использование
 
 ```sh
-$ hhtracker python
+$ hhtracker --keywords python [--region 1]
 ```
