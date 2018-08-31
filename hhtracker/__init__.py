@@ -1,1 +1,1 @@
-name = "hhtracker"
+from .config import config

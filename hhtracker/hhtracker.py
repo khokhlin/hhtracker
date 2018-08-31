@@ -4,12 +4,16 @@ from argparse import ArgumentParser
 from datetime import datetime
 from datetime import timedelta
 import requests
+from .model import Employer
+from .model import Vacancy
+from . import config
 
 
-URL = "https://api.hh.ru/vacancies"
-MAX_TIMEOUT = 3
-MAX_PER_PAGE = 100
-MOSCOW_CODE = 1
+URL = config.api.url
+MAX_TIMEOUT = config.api.max_timeout
+MAX_PER_PAGE = config.api.max_per_page
+MOSCOW_CODE = config.api.moscow_code
+
 FMT = """{vacancy_name:<50.50} | {salary_from}/{salary_to} \
 ({currency}) | {created_at}")
 {vacancy_url}
@@ -41,27 +45,35 @@ def show(vacancies):
         created_at = vacancy.get("created_at")
         print(FMT.format_map(locals()))
 
+def show_():
+    query = Vacancy.select().join(Employer).where(
+        Vacancy.visible == True,
+        Employer.visible == True)
+    for vacancy in query:
+        print(vacancy.name, vacancy.employer.name)
 
 def fetch_pages(params):
     headers = {'user-agent': 'hhtracker'}
     params["page"] = 0
     while True:
         try:
-            result = requests.get(URL,
-                                  params=params,
-                                  headers=headers,
-                                  timeout=MAX_TIMEOUT)
-            result.raise_for_status()
-
+            response = requests.get(URL,
+                                    params=params,
+                                    headers=headers,
+                                    timeout=MAX_TIMEOUT)
+            response.raise_for_status()
+            data = response.json()
         except (requests.exceptions.Timeout,
                 requests.exceptions.ConnectionError):
             logging.error("Unable to connect to server")
             break
         except requests.exceptions.HTTPError:
-            logging.error("Server error: %s", result.status_code)
+            logging.error("Server error: %s", response.status_code)
+            break
+        except ValueError:
+            logging.error("Response is not JSON")
             break
         else:
-            data = result.json()
             current_page = int(data["page"])
             total_pages = int(data["pages"])
             yield data
@@ -69,6 +81,11 @@ def fetch_pages(params):
             if next_page >= total_pages:
                 break
             params["page"] = next_page
+
+
+def save(items):
+    for vacancy in items:
+        Vacancy.create(**vacancy)
 
 
 def get_vacancies(text, region):
@@ -80,8 +97,12 @@ def get_vacancies(text, region):
         "date_from": date_from.strftime("%Y%m%d"),
         "text": text
     }
+    items = []
     for page in fetch_pages(params):
-        show(page["items"])
+        items.extend(page["items"])
+    save(items)
+    show_()
+    return items
 
 
 def parse_args():
