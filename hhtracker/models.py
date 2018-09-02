@@ -41,9 +41,11 @@ class Vacancy(BaseModel):
         employer = Employer.create(**employer_params)
         return super().create(employer=employer, **kwargs)
 
+    @classmethod
+    def new_vacancies(cls):
+        return cls.select().join(Employer).where(cls.visible == True, Employer.visible == True)
+
 
 def create_tables():
     db.connect()
     db.create_tables([Employer, Vacancy])
-
-create_tables()

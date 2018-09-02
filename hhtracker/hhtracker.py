@@ -4,8 +4,10 @@ from argparse import ArgumentParser
 from datetime import datetime
 from datetime import timedelta
 import requests
-from .model import Employer
-from .model import Vacancy
+import click
+from .models import Employer
+from .models import Vacancy
+from .models import create_tables
 from . import config
 
 
@@ -46,11 +48,8 @@ def show(vacancies):
         print(FMT.format_map(locals()))
 
 def show_():
-    query = Vacancy.select().join(Employer).where(
-        Vacancy.visible == True,
-        Employer.visible == True)
-    for vacancy in query:
-        print(vacancy.name, vacancy.employer.name)
+    for vacancy in Vacancy.new_vacancies():
+        click.echo("{} | {}".format(vacancy.name, vacancy.employer.name))
 
 def fetch_pages(params):
     headers = {'user-agent': 'hhtracker'}
@@ -105,17 +104,25 @@ def get_vacancies(text, region):
     return items
 
 
-def parse_args():
-    parser = ArgumentParser()
-    parser.add_argument("--keywords", nargs="+", help="Search keywords")
-    parser.add_argument("--region", type=int, default=MOSCOW_CODE,
-                        help="Region code. (https://api.hh.ru/areas)")
-    return parser.parse_args()
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+def init_db():
+    create_tables()
+
+
+@cli.command()
+@click.option("--keyword", "keywords", multiple=True)
+@click.option("--region", type=int, default=MOSCOW_CODE)
+def new(keywords, region):
+    get_vacancies(text=" ".join(keywords), region=region)
 
 
 def main():
-    args = parse_args()
-    get_vacancies(text=" ".join(args.keywords), region=args.region)
+    cli()
 
 
 if __name__ == "__main__":
