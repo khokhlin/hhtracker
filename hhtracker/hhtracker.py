@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 from datetime import datetime
 from datetime import timedelta
 import requests
-import click
 from .models import Employer
 from .models import Vacancy
 from .models import create_tables
@@ -49,7 +48,7 @@ def show(vacancies):
 
 def show_():
     for vacancy in Vacancy.new_vacancies():
-        click.echo("{} | {}".format(vacancy.name, vacancy.employer.name))
+        print("{} | {}".format(vacancy.name, vacancy.employer.name))
 
 def fetch_pages(params):
     headers = {'user-agent': 'hhtracker'}
@@ -83,11 +82,10 @@ def fetch_pages(params):
 
 
 def save(items):
-    for vacancy in items:
-        Vacancy.create(**vacancy)
+    yield from Vacancy.save_vacancies(items)
 
 
-def get_vacancies(text, region):
+def find_new(text, region):
     date_from = datetime.now() - timedelta(hours=24)
     params = {
         "per_page": MAX_PER_PAGE,
@@ -96,33 +94,25 @@ def get_vacancies(text, region):
         "date_from": date_from.strftime("%Y%m%d"),
         "text": text
     }
-    items = []
     for page in fetch_pages(params):
-        items.extend(page["items"])
-    save(items)
-    show_()
-    return items
+        for item in page["items"]:
+            yield item
+
+def get_vacancies(text, region):
+    new_vacancies = find_new(text, region)
+    saved = save(new_vacancies)
+    res = [vacancy.to_dict() for vacancy in saved]
+    return res
 
 
-@click.group()
-def cli():
-    pass
-
-
-@cli.command()
 def init_db():
     create_tables()
 
 
-@cli.command()
-@click.option("--keyword", "keywords", multiple=True)
-@click.option("--region", type=int, default=MOSCOW_CODE)
-def new(keywords, region):
-    get_vacancies(text=" ".join(keywords), region=region)
-
-
 def main():
-    cli()
+    region = 1
+    keywords = ("python",)
+    get_vacancies(text=" ".join(keywords), region=region)
 
 
 if __name__ == "__main__":

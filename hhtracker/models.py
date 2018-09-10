@@ -7,6 +7,7 @@ from peewee import CharField
 from peewee import DateField
 from peewee import IntegerField
 from peewee import ForeignKeyField
+from playhouse.shortcuts import model_to_dict
 from . import config
 
 
@@ -26,6 +27,8 @@ class Employer(BaseModel):
     name = CharField()
     visible = BooleanField(default=True)
 
+    _visible_fields = [employer_id, name]
+
 
 class Vacancy(BaseModel):
     vacancy_id = IntegerField(primary_key=True)
@@ -33,19 +36,47 @@ class Vacancy(BaseModel):
     salary = IntegerField()
     created_at = DateField(default=datetime.datetime.now)
     employer = ForeignKeyField(Employer, backref="vacancies")
+    currency = CharField()
     visible = BooleanField(default=True)
+
+    _visible_fields = [
+        vacancy_id, name, salary, currency, created_at, employer
+    ] + Employer._visible_fields
 
     @classmethod
     def create(cls, **kwargs):
-        employer_params = kwargs.pop("employer")
-        employer = Employer.create(**employer_params)
-        return super().create(employer=employer, **kwargs)
+        employer = kwargs.pop("employer", None)
+        if employer:
+            new_employer = Employer.create(**employer)
+            kwargs["employer_id"] = new_employer.employer_id
+        return super().create(**kwargs)
+
+    @classmethod
+    def save_vacancies(cls, items):
+        for vacancy in items:
+            employer = vacancy.pop("employer")
+            new_employer, created = Employer.get_or_create(
+                employer_id=employer["employer_id"], defaults=employer)
+            vacancy["employer_id"] = new_employer.employer_id
+            new_vacancy, created =  Vacancy.get_or_create(
+                vacancy_id=vacancy["vacancy_id"], defaults=vacancy)
+            yield new_vacancy
 
     @classmethod
     def new_vacancies(cls):
         return cls.select().join(Employer).where(cls.visible == True, Employer.visible == True)
 
+    def to_dict(self):
+        return  model_to_dict(self, recurse=True, only=self._visible_fields)
+
 
 def create_tables():
-    db.connect()
+    if db.is_closed():
+        db.connect()
     db.create_tables([Employer, Vacancy])
+
+
+def drop_tables():
+    if db.is_closed():
+        db.connect()
+    db.drop_tables([Employer, Vacancy])

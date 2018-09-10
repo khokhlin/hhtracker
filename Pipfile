@@ -8,7 +8,7 @@ requests = "*"
 peewee = "*"
 pyyaml = "*"
 addict = "*"
-click = "*"
+flask = "*"
 
 [requires]
 python_version = "3.5"
