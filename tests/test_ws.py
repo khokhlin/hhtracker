@@ -30,7 +30,7 @@ class TestWebServer(TestCase):
             "salary": 100000,
         }
         Vacancy.create(**vacancy_params)
-        vacancy = self.client.get("/").get_json()[0]
+        vacancy = self.client.get("/api/vacancies").get_json()[0]
         self.assertEqual(vacancy_params["vacancy_id"], vacancy["vacancy_id"])
         self.assertEqual(vacancy_params["salary"], vacancy["salary"])
         self.assertEqual(vacancy_params["employer"], vacancy["employer"])

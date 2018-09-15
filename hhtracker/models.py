@@ -63,8 +63,9 @@ class Vacancy(BaseModel):
             yield new_vacancy
 
     @classmethod
-    def new_vacancies(cls):
-        return cls.select().join(Employer).where(cls.visible == True, Employer.visible == True)
+    def new_vacancies(cls, page, per_page):
+        return cls.select().join(Employer).where(
+            cls.visible == True, Employer.visible == True).paginate(page, per_page)
 
     def to_dict(self):
         return  model_to_dict(self, recurse=True, only=self._visible_fields)
