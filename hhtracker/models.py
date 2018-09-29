@@ -47,7 +47,7 @@ class Vacancy(BaseModel):
     def create(cls, **kwargs):
         employer = kwargs.pop("employer", None)
         if employer:
-            new_employer = Employer.create(**employer)
+            new_employer, created = Employer.get_or_create(**employer)
             kwargs["employer_id"] = new_employer.employer_id
         return super().create(**kwargs)
 
@@ -65,7 +65,9 @@ class Vacancy(BaseModel):
     @classmethod
     def new_vacancies(cls, page, per_page):
         return cls.select().join(Employer).where(
-            cls.visible == True, Employer.visible == True).paginate(page, per_page)
+            cls.visible == True,
+            Employer.visible == True
+        ).paginate(page, per_page)
 
     def to_dict(self):
         return  model_to_dict(self, recurse=True, only=self._visible_fields)
