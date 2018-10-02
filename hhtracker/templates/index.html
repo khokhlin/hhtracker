@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>HHTracker</title>
-    </head>
-    <body>
-        <h1>HHTracker</h1>
-        <p>Test</p>
-    </body>
-</html>
+{% extends "bootstrap/base.html" %}
+{% block title %}HHTracker{% endblock %}
+
+{% block navbar %}
+    <nav class="navbar navbar-default">
+        Navigation bar
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>Hello, HHTracker</h1>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-info" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block app_content %}{% endblock %}
+    </div>
+{% endblock %}

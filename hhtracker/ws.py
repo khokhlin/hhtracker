@@ -3,10 +3,13 @@ from flask import jsonify
 from flask import request
 from flask import render_template
 from flask import abort
+from flask_bootstrap import Bootstrap
 from hhtracker.models import Vacancy
 
 
 app = Flask(__name__)
+Bootstrap(app)
+
 ITEMS_PER_PAGE = 3
 
 
