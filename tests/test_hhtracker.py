@@ -27,12 +27,12 @@ class TestHHTracker(TestCase):
             "page": "0",
             "pages": 1,
             "items": [{
-                "vacancy_id": 1,
+                "id": 1,
                 "name": "Python developer",
                 "salary": "100000",
                 "currency": "RUB",
                 "employer": {
-                    "employer_id": 1,
+                    "id": 1,
                     "name": "Google"
                 }
             }]
@@ -54,12 +54,12 @@ class TestHHTracker(TestCase):
         self.assertEqual(result, expected)
 
         resp["items"].append({
-            "vacancy_id": 2,
+            "id": 2,
             "name": "Java Developer",
             "salary": "2000000",
             "currency": "RUB",
             "employer": {
-                "employer_id": 1,
+                "id": 1,
                 "name": "Google",
             }
         })

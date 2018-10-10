@@ -46,9 +46,6 @@ def show(vacancies):
         created_at = vacancy.get("created_at")
         print(FMT.format_map(locals()))
 
-def show_():
-    for vacancy in Vacancy.new_vacancies():
-        print("{} | {}".format(vacancy.name, vacancy.employer.name))
 
 def fetch_pages(params):
     headers = {'user-agent': 'hhtracker'}
@@ -81,10 +78,6 @@ def fetch_pages(params):
             params["page"] = next_page
 
 
-def save(items):
-    yield from Vacancy.save_vacancies(items)
-
-
 def find_new(text, region):
     date_from = datetime.now() - timedelta(hours=24)
     params = {
@@ -98,9 +91,10 @@ def find_new(text, region):
         for item in page["items"]:
             yield item
 
+
 def get_vacancies(text, region):
     new_vacancies = find_new(text, region)
-    saved = save(new_vacancies)
+    saved = Vacancy.save_vacancies(new_vacancies)
     res = [vacancy.to_dict() for vacancy in saved]
     return res
 

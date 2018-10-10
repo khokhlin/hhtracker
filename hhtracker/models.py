@@ -1,3 +1,4 @@
+import logging
 import sys
 import datetime
 from peewee import Model
@@ -55,6 +56,12 @@ class Vacancy(BaseModel):
     def save_vacancies(cls, items):
         for vacancy in items:
             employer = vacancy.pop("employer")
+            try:
+                employer["employer_id"] = employer.pop("id")
+                vacancy["vacancy_id"] = vacancy.pop("id")
+            except KeyError:
+                logging.error("Mailformed vacancy: %s", vacancy)
+                continue
             new_employer, created = Employer.get_or_create(
                 employer_id=employer["employer_id"], defaults=employer)
             vacancy["employer_id"] = new_employer.employer_id
