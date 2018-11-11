@@ -7,7 +7,8 @@ from flask_bootstrap import Bootstrap
 from hhtracker.models import Vacancy
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 Bootstrap(app)
 
 ITEMS_PER_PAGE = 3

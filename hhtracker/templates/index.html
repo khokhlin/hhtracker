@@ -18,6 +18,14 @@
         {% endif %}
         {% endwith %}
 
-        {% block app_content %}{% endblock %}
+        {% block app_content %}
+            <div id="app"></div>
+        {% endblock %}
     </div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.3.3/backbone-min.js"></script>
+    <script type="text/javascript" src="static/script.js"></script>
 {% endblock %}
