@@ -29,7 +29,7 @@ def get_vacancies():
     ])
 
 
-@app.route("/api/vacancy/<int:vacancy_id>", methods=["POST"])
+@app.route("/api/vacancies/<int:vacancy_id>", methods=["POST"])
 def update_vacancy(vacancy_id):
     vacancy = Vacancy.get_by_id(vacancy_id)
     if not vacancy:
