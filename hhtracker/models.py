@@ -34,10 +34,10 @@ class Employer(BaseModel):
 class Vacancy(BaseModel):
     vacancy_id = IntegerField(primary_key=True)
     name = CharField()
-    salary = IntegerField()
+    salary = IntegerField(null=True)
     created_at = DateField(default=datetime.datetime.now)
     employer = ForeignKeyField(Employer, backref="vacancies")
-    currency = CharField()
+    currency = CharField(null=True)
     visible = BooleanField(default=True)
 
     _visible_fields = [
@@ -59,6 +59,11 @@ class Vacancy(BaseModel):
             try:
                 employer["employer_id"] = employer.pop("id")
                 vacancy["vacancy_id"] = vacancy.pop("id")
+                try:
+                    salary = vacancy.pop("salary")["salary_to"]
+                    vacancy["salary"] = int(salary)
+                except (KeyError, TypeError):
+                    pass
             except KeyError:
                 logging.error("Mailformed vacancy: %s", vacancy)
                 continue
@@ -66,7 +71,7 @@ class Vacancy(BaseModel):
                 employer_id=employer["employer_id"], defaults=employer)
             vacancy["employer_id"] = new_employer.employer_id
             new_vacancy, created =  Vacancy.get_or_create(
-                vacancy_id=vacancy["vacancy_id"], defaults=vacancy)
+                vacancy_id=int(vacancy["vacancy_id"]), defaults=vacancy)
             yield new_vacancy
 
     @classmethod

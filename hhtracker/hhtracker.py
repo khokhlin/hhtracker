@@ -99,14 +99,21 @@ def get_vacancies(text, region):
     return res
 
 
-def init_db():
-    create_tables()
+def parse_args():
+    parser = ArgumentParser("hhtracker")
+    parser.add_argument("--init", action="store_true")
+    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--region", type=int, default=MOSCOW_CODE)
+    parser.add_argument("--keywords", nargs="+")
+    return parser.parse_args()
 
 
 def main():
-    region = 1
-    keywords = ("python",)
-    get_vacancies(text=" ".join(keywords), region=region)
+    args = parse_args()
+    if args.init:
+        create_tables()
+
+    get_vacancies(text=" ".join(args.keywords), region=args.region)
 
 
 if __name__ == "__main__":
