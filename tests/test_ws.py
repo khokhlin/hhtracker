@@ -46,7 +46,7 @@ def test_can_get_vacancies(client):
 
     # Change the first record visibility
 
-    client.post("/api/vacancy/1", json={"visible": False})
+    client.post("/api/vacancies/1", json={"visible": False})
     resp = client.get("/api/vacancies?per_page=10").get_json()
     assert len(resp) == 8
     assert len([item for item in resp if item["vacancy_id"] == 1]) == 0

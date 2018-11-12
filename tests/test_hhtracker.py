@@ -32,8 +32,10 @@ def test_vacancies_created(mocker):
         "items": [{
             "id": 1,
             "name": "Python developer",
-            "salary": "100000",
-            "currency": "RUB",
+            "salary": {
+                "from": "100000",
+                "currency": "RUR"
+            },
             "employer": {
                 "id": 1,
                 "name": "Google"
@@ -49,7 +51,7 @@ def test_vacancies_created(mocker):
 
     expected = [{
         'vacancy_id': 1,
-        'currency': 'RUB',
+        'currency': 'RUR',
         'employer': {'employer_id': 1, 'name': 'Google'},
         'name': 'Python developer',
         'salary': 100000
@@ -60,7 +62,7 @@ def test_vacancies_created(mocker):
         "id": 2,
         "name": "Java Developer",
         "salary": "2000000",
-        "currency": "RUB",
+        "currency": "RUR",
         "employer": {
             "id": 1,
             "name": "Google",

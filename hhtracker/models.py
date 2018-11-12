@@ -60,8 +60,9 @@ class Vacancy(BaseModel):
                 employer["employer_id"] = employer.pop("id")
                 vacancy["vacancy_id"] = vacancy.pop("id")
                 try:
-                    salary = vacancy.pop("salary")["salary_to"]
-                    vacancy["salary"] = int(salary)
+                    salary = vacancy.pop("salary")
+                    vacancy["salary"] = int(salary["from"])
+                    vacancy["currency"] = salary["currency"]
                 except (KeyError, TypeError):
                     pass
             except KeyError:
