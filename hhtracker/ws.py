@@ -40,7 +40,3 @@ def update_vacancy(vacancy_id):
         vacancy.save()
 
     return jsonify(vacancy.to_dict())
-
-
-if __name__ == "__main__":
-    app.run()

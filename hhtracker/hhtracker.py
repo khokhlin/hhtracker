@@ -1,13 +1,12 @@
 """hhtracker - track new vacancies on hh.ru"""
 import logging
-from argparse import ArgumentParser
 from datetime import datetime
 from datetime import timedelta
 import requests
-from .models import Employer
-from .models import Vacancy
-from .models import create_tables
-from . import config
+from hhtracker.models import Employer
+from hhtracker.models import Vacancy
+from hhtracker.models import create_tables
+from hhtracker import config
 
 
 URL = config.api.url
@@ -20,6 +19,7 @@ FMT = """{vacancy_name:<50.50} | {salary_from}/{salary_to} \
 {vacancy_url}
 {employer_name} ({employer_url})
 """
+
 
 def show(vacancies):
     """
@@ -99,22 +99,9 @@ def get_vacancies(text, region):
     return res
 
 
-def parse_args():
-    parser = ArgumentParser("hhtracker")
-    parser.add_argument("--init", action="store_true")
-    parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--region", type=int, default=MOSCOW_CODE)
-    parser.add_argument("--keywords", nargs="+")
-    return parser.parse_args()
-
-
-def main():
-    args = parse_args()
-    if args.init:
+def run(region=MOSCOW_CODE, keywords=None, init_db=False):
+    keywords = keywords or []
+    if init_db:
         create_tables()
 
-    get_vacancies(text=" ".join(args.keywords), region=args.region)
-
-
-if __name__ == "__main__":
-    main()
+    get_vacancies(text=" ".join(keywords), region=region)

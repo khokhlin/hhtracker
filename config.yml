@@ -4,3 +4,4 @@ api:
     max_timeout: 3
     moscow_code: 1
     per_page: 100
+test: False

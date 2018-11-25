@@ -9,7 +9,7 @@ from peewee import DateField
 from peewee import IntegerField
 from peewee import ForeignKeyField
 from playhouse.shortcuts import model_to_dict
-from . import config
+from hhtracker import config
 
 
 if config.test is True:
