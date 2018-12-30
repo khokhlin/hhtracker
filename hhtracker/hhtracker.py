@@ -8,99 +8,67 @@ from hhtracker.models import create_tables
 from hhtracker import config
 
 
-URL = config.api.url
-MAX_TIMEOUT = config.api.max_timeout
-MAX_PER_PAGE = config.api.max_per_page
-MOSCOW_CODE = config.api.moscow_code
+class ApiClient:
 
-FMT = """{vacancy_name:<50.50} | {salary_from}/{salary_to} \
-({currency}) | {created_at}")
-{vacancy_url}
-{employer_name} ({employer_url})
-"""
+    resource_uri = config.api.url.strip("/") + "/vacancies"
+    max_timeout = config.api.max_timeout
+    max_per_page = config.api.max_per_page
+    moscow_code = config.api.moscow_code
 
-
-def show(vacancies):
-    """
-    Available keys:
-    [
-        'type', 'archived', 'created_at', 'response_letter_required', 'snippet',
-        'area', 'employer', 'alternate_url', 'sort_point_distance', 'relations',
-        'url', 'department', 'published_at', 'salary', 'apply_alternate_url',
-        'id', 'name', 'address', 'premium'
-    ]
-    """
-    for vacancy in vacancies:
-        vacancy_id = vacancy.get("id")
-        vacancy_name = vacancy.get("name")
-        vacancy_url = vacancy.get("url")
-        salary = vacancy.get("salary") or {}
-        currency = salary.get("currency") or "..."
-        salary_from = salary.get("from") or "..."
-        salary_to = salary.get("to") or "..."
-        gross = salary.get("gross")
-        employer = vacancy.get("employer")
-        employer_name = employer.get("name")
-        employer_url = employer.get("url")
-        created_at = vacancy.get("created_at")
-        print(FMT.format_map(locals()))
-
-
-def fetch_pages(params):
-    headers = {'user-agent': 'hhtracker'}
-    params["page"] = 0
-    while True:
-        try:
-            response = requests.get(URL,
-                                    params=params,
-                                    headers=headers,
-                                    timeout=MAX_TIMEOUT)
-            response.raise_for_status()
-            data = response.json()
-        except (requests.exceptions.Timeout,
-                requests.exceptions.ConnectionError):
-            logging.error("Unable to connect to server")
-            break
-        except requests.exceptions.HTTPError:
-            logging.error("Server error: %s", response.status_code)
-            break
-        except ValueError:
-            logging.error("Response is not JSON")
-            break
-        else:
-            current_page = int(data["page"])
-            total_pages = int(data["pages"])
-            yield data
-            next_page = current_page + 1
-            if next_page >= total_pages:
+    def _get_pages(self, params):
+        headers = {'user-agent': 'hhtracker'}
+        params["page"] = 0
+        while True:
+            try:
+                response = requests.get(self.resource_uri,
+                                        params=params,
+                                        headers=headers,
+                                        timeout=self.max_timeout)
+                response.raise_for_status()
+                data = response.json()
+            except (requests.exceptions.Timeout,
+                    requests.exceptions.ConnectionError):
+                logging.error("Unable to connect to server")
                 break
-            params["page"] = next_page
+            except requests.exceptions.HTTPError:
+                logging.error("Server error: %s", response.status_code)
+                break
+            except ValueError:
+                logging.error("Response is not JSON")
+                break
+            else:
+                current_page = int(data["page"])
+                total_pages = int(data["pages"])
+                yield data
+                next_page = current_page + 1
+                if next_page >= total_pages:
+                    break
+                params["page"] = next_page
+
+    def new_vacancies(self, keywords_str, region):
+        date_from = datetime.now() - timedelta(hours=24)
+        params = {
+            "per_page": self.max_per_page,
+            "area": region,
+            "search_field": "name",
+            "date_from": date_from.strftime("%Y%m%d"),
+            "text": keywords_str
+        }
+        for page in self._get_pages(params):
+            for item in page["items"]:
+                yield item
 
 
-def find_new(text, region):
-    date_from = datetime.now() - timedelta(hours=24)
-    params = {
-        "per_page": MAX_PER_PAGE,
-        "area": region,
-        "search_field": "name",
-        "date_from": date_from.strftime("%Y%m%d"),
-        "text": text
-    }
-    for page in fetch_pages(params):
-        for item in page["items"]:
-            yield item
-
-
-def get_vacancies(text, region):
-    new_vacancies = find_new(text, region)
+def get_vacancies(keywords_str, region):
+    client = ApiClient()
+    new_vacancies = client.new_vacancies(keywords_str, region)
     saved = Vacancy.save_vacancies(new_vacancies)
-    res = [vacancy.to_dict() for vacancy in saved]
-    return res
+    return (vacancy.to_dict() for vacancy in saved)
 
 
-def run(region=MOSCOW_CODE, keywords=None, init_db=False):
-    keywords = keywords or []
+def run(region=config.api.moscow_code, keywords=None, init_db=False):
     if init_db:
         create_tables()
 
-    get_vacancies(text=" ".join(keywords), region=region)
+    keywords_str = " ".join(keywords or [])
+    get_vacancies(keywords_str=keywords_str, region=region)
