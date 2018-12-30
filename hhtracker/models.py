@@ -71,7 +71,7 @@ class Vacancy(BaseModel):
             new_employer, created = Employer.get_or_create(
                 employer_id=employer["employer_id"], defaults=employer)
             vacancy["employer_id"] = new_employer.employer_id
-            new_vacancy, created =  Vacancy.get_or_create(
+            new_vacancy, created = Vacancy.get_or_create(
                 vacancy_id=int(vacancy["vacancy_id"]), defaults=vacancy)
             yield new_vacancy
 

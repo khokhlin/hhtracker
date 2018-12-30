@@ -1,3 +1,4 @@
+"""Web Server Module"""
 from flask import Flask
 from flask import jsonify
 from flask import request
@@ -36,7 +37,7 @@ def update_vacancy(vacancy_id):
         abort(404)
     data = request.json
     if data:
-        vacancy.visible=data["visible"]
+        vacancy.visible = data["visible"]
         vacancy.save()
 
     return jsonify(vacancy.to_dict())

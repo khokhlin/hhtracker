@@ -3,7 +3,6 @@ import logging
 from datetime import datetime
 from datetime import timedelta
 import requests
-from hhtracker.models import Employer
 from hhtracker.models import Vacancy
 from hhtracker.models import create_tables
 from hhtracker import config

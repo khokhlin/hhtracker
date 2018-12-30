@@ -1,7 +1,6 @@
+"""HHTracker Setup"""
 import setuptools
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
 
 setuptools.setup(
     name="hhtracker",
@@ -9,8 +8,6 @@ setuptools.setup(
     author="Andrey Khokhlin",
     author_email="khokhlin@gmail.com",
     description="HHTracker",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
     url="https://github.com/khokhlin/hhtracker",
     packages=setuptools.find_packages(),
     install_requires=[
@@ -21,8 +18,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ),
     entry_points={
-          'console_scripts': [
-              'hhtracker=hhtracker.hhtracker:main'
-          ]
-      }
+        "console_scripts": [
+            "hhtracker=hhtracker.hhtracker:main"
+        ]
+    }
 )
