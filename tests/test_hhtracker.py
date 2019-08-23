@@ -43,8 +43,11 @@ def test_vacancies_created(mocker):
     resp["items"].append({
         "id": 2,
         "name": "Java Developer",
-        "salary": "2000000",
-        "currency": "RUR",
+        "salary": {
+            "from": "200000",
+            "to": "300000",
+            "currency": "RUR",
+        },
         "employer": {
             "id": 1,
             "name": "Google",

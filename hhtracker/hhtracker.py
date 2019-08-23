@@ -8,7 +8,7 @@ from hhtracker.models import create_tables
 from hhtracker import config
 
 
-class ApiClient:
+class HhClient:
 
     resource_uri = config.api.url.strip("/") + "/vacancies"
     max_timeout = config.api.max_timeout
@@ -54,13 +54,18 @@ class ApiClient:
             "date_from": date_from.strftime("%Y%m%d"),
             "text": keywords_str
         }
+
         for page in self._get_pages(params):
-            for item in page["items"]:
-                yield item
+            for vacancy in page["items"]:
+                vacancy["vacancy_id"] = vacancy.pop("id")
+                employer = vacancy["employer"]
+                employer["employer_id"] = employer.pop("id")
+                vacancy["employer"] = employer
+                yield vacancy
 
 
 def get_vacancies(keywords_str, region):
-    client = ApiClient()
+    client = HhClient()
     new_vacancies = client.new_vacancies(keywords_str, region)
     saved = Vacancy.save_vacancies(new_vacancies)
     return (vacancy.to_dict() for vacancy in saved)

@@ -53,25 +53,20 @@ class Vacancy(BaseModel):
         return super().create(**kwargs)
 
     @classmethod
-    def save_vacancies(cls, items):
-        for vacancy in items:
+    def save_vacancies(cls, vacancies):
+        for vacancy in vacancies:
             employer = vacancy.pop("employer")
             try:
-                employer["employer_id"] = employer.pop("id")
-                vacancy["vacancy_id"] = vacancy.pop("id")
-                try:
-                    salary = vacancy.pop("salary")
-                    vacancy["salary"] = int(salary["from"])
-                    vacancy["currency"] = salary["currency"]
-                except (KeyError, TypeError):
-                    pass
+                salary = vacancy.pop("salary")
+                vacancy["salary"] = int(salary.get("from", 0))
+                vacancy["currency"] = salary["currency"]
             except KeyError:
                 logging.error("Mailformed vacancy: %s", vacancy)
                 continue
-            new_employer, created = Employer.get_or_create(
+            new_employer, _ = Employer.get_or_create(
                 employer_id=employer["employer_id"], defaults=employer)
             vacancy["employer_id"] = new_employer.employer_id
-            new_vacancy, created = Vacancy.get_or_create(
+            new_vacancy, _ = Vacancy.get_or_create(
                 vacancy_id=int(vacancy["vacancy_id"]), defaults=vacancy)
             yield new_vacancy
 
