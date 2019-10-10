@@ -10,9 +10,12 @@ pyyaml = "*"
 addict = "*"
 flask = "*"
 flask-bootstrap = "*"
+aiohttp = "*"
+attrs = "==19.1.0"
+pysqlite3 = "*"
 
 [requires]
-python_version = "3.5"
+python_version = "3.6"
 
 [dev-packages]
 pytest = "*"

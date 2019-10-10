@@ -1,29 +1,52 @@
 """hhtracker - track new vacancies on hh.ru"""
+import asyncio
 import logging
 from datetime import datetime
 from datetime import timedelta
+from argparse import ArgumentParser
+import aiohttp
 import requests
-from hhtracker.models import Vacancy
-from hhtracker.models import create_tables
-from hhtracker import config
+
+from . import config
+from .models import Vacancy
+from .models import create_tables
 
 
 class HhClient:
 
     resource_uri = config.api.url.strip("/") + "/vacancies"
-    max_timeout = config.api.max_timeout
-    max_per_page = config.api.max_per_page
-    moscow_code = config.api.moscow_code
 
-    def _get_pages(self, params):
+    def get_pages(self,
+                  per_page=config.api.max_per_page,
+                  area=config.api.moscow_code,
+                  search_field="text",
+                  text=None,
+                  page=0,
+                  date_from=None):
+
+        if date_from is None:
+            date_from = (datetime.now() - timedelta(hours=24)).strftime("%Y%m%d")
+
+        params = {
+            "per_page": per_page,
+            "area": area,
+            "search_field": search_field,
+            "text": text,
+            "page": page,
+            "date_from": date_from
+        }
+
+        max_timeout = config.api.max_timeout
+
         headers = {'user-agent': 'hhtracker'}
-        params["page"] = 0
+
+
         while True:
             try:
                 response = requests.get(self.resource_uri,
                                         params=params,
                                         headers=headers,
-                                        timeout=self.max_timeout)
+                                        timeout=max_timeout)
                 response.raise_for_status()
                 data = response.json()
             except (requests.exceptions.Timeout,
@@ -45,35 +68,66 @@ class HhClient:
                     break
                 params["page"] = next_page
 
-    def new_vacancies(self, keywords_str, region):
-        date_from = datetime.now() - timedelta(hours=24)
-        params = {
-            "per_page": self.max_per_page,
-            "area": region,
-            "search_field": "name",
-            "date_from": date_from.strftime("%Y%m%d"),
-            "text": keywords_str
-        }
 
-        for page in self._get_pages(params):
+async def get_vacancies_async(query_text, region):
+    session = aiohttp.ClientSession()
+    resource_uri = config.api.url.strip("/") + "/vacancies"
+    date_from = (datetime.now() - timedelta(hours=24)).strftime("%Y%m%d")
+    params = {
+        "per_page": config.api.per_page,
+        "area": config.api.moscow_code,
+        "search_field": "name",
+        "text": query_text,
+        "page": 0,
+        "date_from": date_from
+    }
+
+    async with session.get(resource_uri, params=params) as resp:
+        text = await resp.text()
+        print(text)
+    await session.close()
+    return text
+
+
+def get_vacancies(query_text, region):
+    client = HhClient()
+    pages = client.get_pages(
+        area=region,
+        text=query_text
+    )
+    def new_vacancies():
+        for page in pages:
             for vacancy in page["items"]:
                 vacancy["vacancy_id"] = vacancy.pop("id")
                 employer = vacancy["employer"]
                 employer["employer_id"] = employer.pop("id")
                 vacancy["employer"] = employer
                 yield vacancy
-
-
-def get_vacancies(keywords_str, region):
-    client = HhClient()
-    new_vacancies = client.new_vacancies(keywords_str, region)
-    saved = Vacancy.save_vacancies(new_vacancies)
+    saved = Vacancy.save_vacancies(new_vacancies())
     return (vacancy.to_dict() for vacancy in saved)
 
 
-def run(region=config.api.moscow_code, keywords=None, init_db=False):
-    if init_db:
+def parse_args():
+    parser = ArgumentParser("hhtracker")
+    parser.add_argument("--init-db", action="store_true")
+    parser.add_argument("--region", type=int, default=config.api.moscow_code)
+    parser.add_argument("--keywords", nargs="+", required=True)
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    if args.init_db:
         create_tables()
 
-    keywords_str = " ".join(keywords or [])
-    get_vacancies(keywords_str=keywords_str, region=region)
+    query_text = " ".join(args.keywords or [])
+
+    loop = asyncio.get_event_loop()
+    vacancies = loop.run_until_complete(
+        get_vacancies_async(query_text=query_text, region=args.region)
+    )
+    print(vacancies)
+
+
+if __name__ == "__main__":
+    main()
